@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Belaz Calendar</title>
+
+		<link rel="stylesheet" href="css/main.css" />
+		<link rel="stylesheet" href="css/calendar.css" />
+		<link rel="stylesheet" href="css/modal.css" />
+		<link rel="stylesheet" href="css/legend.css" />
+		<link rel="stylesheet" href="css/notifications.css" />
+	</head>
+	<body>
+		<div class="app-container">
+			<header class="header">
+				<div class="header-content">
+					<h1 class="logo">Belaz Calendar</h1>
+					<div class="header-controls">
+						<div class="truck-selector">
+							<label for="truckSelect">Выбранный самосвал:</label>
+							<select id="truckSelect" class="truck-select">
+								<option value="">Все машины</option>
+							</select>
+						</div>
+						<div class="month-selector">
+							<input
+								type="month"
+								id="monthInput"
+								class="month-input"
+							/>
+						</div>
+						<button id="todayBtn" class="btn btn-secondary">
+							Сегодня
+						</button>
+						<button id="planSeasonalBtn" class="btn btn-primary">
+							+ Сезонное ТО
+						</button>
+					</div>
+				</div>
+			</header>
+
+			<main class="main-content">
+				<aside class="sidebar-legend">
+					<div id="legend" class="legend"></div>
+				</aside>
+				<section class="calendar-section">
+					<div class="calendar-header">
+						<button id="prevMonth" class="btn btn-nav">
+							Предыдущий
+						</button>
+						<h2 id="currentMonthYear" class="month-year-title"></h2>
+						<button id="nextMonth" class="btn btn-nav">
+							Следующий
+						</button>
+					</div>
+
+					<div id="calendar" class="calendar-grid"></div>
+				</section>
+			</main>
+		</div>
+
+		<div id="notifications" class="notifications-container"></div>
+
+		<div id="actionsModal" class="modal hidden">
+			<div class="modal-content modal-lg">
+				<div class="modal-header">
+					<h3 id="actionsModalTitle"></h3>
+					<button class="modal-close" data-modal="actionsModal">
+						&times;
+					</button>
+				</div>
+				<div class="modal-body">
+					<div id="actionsList" class="actions-list"></div>
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-secondary" data-modal="actionsModal">
+						Закрыть
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<div id="dayEventsModal" class="modal hidden">
+			<div class="modal-content modal-lg">
+				<div class="modal-header">
+					<h3 id="dayEventsModalTitle"></h3>
+					<button class="modal-close" data-modal="dayEventsModal">
+						&times;
+					</button>
+				</div>
+				<div class="modal-body">
+					<div id="dayEventsList" class="day-events-list"></div>
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-secondary" data-modal="dayEventsModal">
+						Закрыть
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<div id="planMaintenanceModal" class="modal hidden">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h3>Планирование ТО</h3>
+					<button
+						class="modal-close"
+						data-modal="planMaintenanceModal"
+					>
+						&times;
+					</button>
+				</div>
+				<div class="modal-body">
+					<form id="planMaintenanceForm" class="form">
+						<div class="form-group">
+							<label for="plannedDate"
+								>Дата выполнения (±2 дня):</label
+							>
+							<input
+								type="date"
+								id="plannedDate"
+								class="form-input"
+								required
+							/>
+							<small id="dateRange" class="form-hint"></small>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button
+						class="btn btn-secondary"
+						data-modal="planMaintenanceModal"
+					>
+						Отмена
+					</button>
+					<button id="savePlanBtn" class="btn btn-primary">
+						Сохранить
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<div id="completeMaintenanceModal" class="modal hidden">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h3>Отметить ТО как выполненное</h3>
+					<button
+						class="modal-close"
+						data-modal="completeMaintenanceModal"
+					>
+						&times;
+					</button>
+				</div>
+				<div class="modal-body">
+					<form id="completeMaintenanceForm" class="form">
+						<div class="form-group">
+							<label for="completionDate">Дата выполнения:</label>
+							<input
+								type="date"
+								id="completionDate"
+								class="form-input"
+								required
+							/>
+							<small id="dateWarning" class="form-hint"></small>
+						</div>
+						<div class="form-group">
+							<label for="completionMileage">Пробег (км):</label>
+							<input
+								type="number"
+								id="completionMileage"
+								class="form-input"
+								step="0.1"
+								required
+							/>
+							<small
+								id="mileageWarning"
+								class="form-hint"
+							></small>
+						</div>
+						<div class="form-group">
+							<label for="completionHours"
+								>Наработка двигателя (ч):</label
+							>
+							<input
+								type="number"
+								id="completionHours"
+								class="form-input"
+								step="0.1"
+								required
+							/>
+							<small id="hoursWarning" class="form-hint"></small>
+						</div>
+						<div id="checklistContainer"></div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button
+						class="btn btn-secondary"
+						data-modal="completeMaintenanceModal"
+					>
+						Отмена
+					</button>
+					<button id="confirmCompleteBtn" class="btn btn-primary">
+						Выполнено
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<div id="seasonalModal" class="modal hidden">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h3>Планирование сезонного ТО</h3>
+					<button class="modal-close" data-modal="seasonalModal">
+						&times;
+					</button>
+				</div>
+				<div class="modal-body">
+					<form id="seasonalForm" class="form">
+						<div class="form-group">
+							<label for="seasonalDate">Дата выполнения:</label>
+							<input
+								type="date"
+								id="seasonalDate"
+								class="form-input"
+								required
+							/>
+							<small class="form-hint"
+								>Начиная с сегодняшнего дня</small
+							>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button
+						class="btn btn-secondary"
+						data-modal="seasonalModal"
+					>
+						Отмена
+					</button>
+					<button id="saveSeasonalBtn" class="btn btn-primary">
+						Сохранить
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<div id="loadingSpinner" class="loading-spinner hidden">
+			<div class="spinner"></div>
+		</div>
+
+		<script type="module" src="js/main.js"></script>
+	</body>
+</html>

@@ -1,0 +1,325 @@
+:root {
+	--color-primary: #2563eb;
+	--color-primary-hover: #1d4ed8;
+	--color-secondary: #6b7280;
+	--color-success: #10b981;
+	--color-warning: #f59e0b;
+	--color-danger: #ef4444;
+	--color-light-green: #d1fae5;
+	--color-text-dark: #1f2937;
+	--color-text-light: #6b7280;
+	--color-border: #e5e7eb;
+	--color-bg-light: #f9fafb;
+	--color-bg-white: #ffffff;
+
+	--spacing-xs: 0.25rem;
+	--spacing-sm: 0.5rem;
+	--spacing-md: 1rem;
+	--spacing-lg: 1.5rem;
+	--spacing-xl: 2rem;
+	--spacing-2xl: 3rem;
+
+	--border-radius: 0.5rem;
+	--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+	--shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+	--font-size-sm: 0.875rem;
+	--font-size-base: 1rem;
+	--font-size-lg: 1.125rem;
+	--font-size-xl: 1.25rem;
+	--font-size-2xl: 1.5rem;
+
+	--transition: all 0.3s ease;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+html {
+	font-size: 16px;
+	scroll-behavior: smooth;
+}
+
+body {
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+		Arial, sans-serif;
+	background-color: var(--color-bg-light);
+	color: var(--color-text-dark);
+	line-height: 1.5;
+	font-size: var(--font-size-base);
+}
+
+.app-container {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+
+.header {
+	background-color: var(--color-bg-white);
+	border-bottom: 1px solid var(--color-border);
+	padding: var(--spacing-xl) var(--spacing-2xl);
+	box-shadow: var(--shadow-sm);
+}
+
+.header-content {
+	max-width: 1400px;
+	margin: 0 auto;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-lg);
+}
+
+.logo {
+	font-size: var(--font-size-2xl);
+	font-weight: 700;
+	color: var(--color-primary);
+	margin: 0;
+}
+
+.header-controls {
+	display: flex;
+	gap: var(--spacing-lg);
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.truck-selector {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-md);
+}
+
+.truck-selector label {
+	font-weight: 600;
+	color: var(--color-text-dark);
+	white-space: nowrap;
+}
+
+.truck-select,
+.month-input {
+	padding: var(--spacing-sm) var(--spacing-md);
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+	font-size: var(--font-size-base);
+	background-color: var(--color-bg-white);
+	color: var(--color-text-dark);
+	cursor: pointer;
+	transition: var(--transition);
+}
+
+.truck-select:hover,
+.month-input:hover {
+	border-color: var(--color-primary);
+}
+
+.truck-select:focus,
+.month-input:focus {
+	outline: none;
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.main-content {
+	display: flex;
+	flex: 1;
+	max-width: 1400px;
+	margin: 0 auto;
+	width: 100%;
+	gap: var(--spacing-xl);
+	padding: var(--spacing-xl) var(--spacing-2xl);
+}
+
+.sidebar-legend {
+	width: 200px;
+	flex-shrink: 0;
+}
+
+.calendar-section {
+	flex: 1;
+	min-width: 0;
+}
+
+.btn {
+	padding: var(--spacing-sm) var(--spacing-md);
+	border: none;
+	border-radius: var(--border-radius);
+	font-size: var(--font-size-base);
+	font-weight: 600;
+	cursor: pointer;
+	transition: var(--transition);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-sm);
+	white-space: nowrap;
+}
+
+.btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.btn-primary {
+	background-color: var(--color-primary);
+	color: var(--color-bg-white);
+}
+
+.btn-primary:hover:not(:disabled) {
+	background-color: var(--color-primary-hover);
+	box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+	background-color: var(--color-secondary);
+	color: var(--color-bg-white);
+}
+
+.btn-secondary:hover:not(:disabled) {
+	background-color: #4b5563;
+	box-shadow: var(--shadow-md);
+}
+
+.btn-nav {
+	background-color: var(--color-primary);
+	color: var(--color-bg-white);
+	padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.btn-nav:hover:not(:disabled) {
+	background-color: var(--color-primary-hover);
+	box-shadow: var(--shadow-md);
+}
+
+.btn-sm {
+	padding: var(--spacing-xs) var(--spacing-sm);
+	font-size: var(--font-size-sm);
+}
+
+.btn-danger {
+	background-color: var(--color-danger);
+	color: var(--color-bg-white);
+}
+
+.btn-danger:hover:not(:disabled) {
+	background-color: #dc2626;
+	box-shadow: var(--shadow-md);
+}
+
+.loading-spinner {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: rgba(0, 0, 0, 0.3);
+	z-index: 1000;
+}
+
+.loading-spinner.hidden {
+	display: none;
+}
+
+.spinner {
+	width: 50px;
+	height: 50px;
+	border: 4px solid var(--color-border);
+	border-top-color: var(--color-primary);
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (max-width: 1024px) {
+	.main-content {
+		flex-direction: column;
+	}
+
+	.sidebar-legend {
+		width: 100%;
+	}
+
+	.header-controls {
+		gap: var(--spacing-md);
+	}
+}
+
+@media (max-width: 768px) {
+	.header-content {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.logo {
+		font-size: var(--font-size-xl);
+	}
+
+	.header-controls {
+		width: 100%;
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.truck-selector {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.truck-select {
+		width: 100%;
+	}
+
+	.month-input,
+	.btn {
+		width: 100%;
+	}
+}
+
+.hidden {
+	display: none !important;
+}
+
+.text-center {
+	text-align: center;
+}
+
+.text-muted {
+	color: var(--color-text-light);
+}
+
+.mt {
+	margin-top: var(--spacing-md);
+}
+
+.mb {
+	margin-bottom: var(--spacing-md);
+}
+
+.flex {
+	display: flex;
+}
+
+.flex-center {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.gap-md {
+	gap: var(--spacing-md);
+}

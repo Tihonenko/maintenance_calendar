@@ -1,0 +1,123 @@
+
+.legend {
+	background-color: var(--color-bg-white);
+	border-radius: var(--border-radius);
+	padding: var(--spacing-lg);
+	box-shadow: var(--shadow-md);
+	position: sticky;
+	top: var(--spacing-xl);
+}
+
+.legend-title {
+	font-size: var(--font-size-lg);
+	font-weight: 700;
+	color: var(--color-text-dark);
+	margin-bottom: var(--spacing-md);
+	padding-bottom: var(--spacing-md);
+	border-bottom: 2px solid var(--color-border);
+}
+
+.legend-items {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+}
+
+.legend-item {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-md);
+}
+
+.legend-indicator {
+	width: 24px;
+	height: 24px;
+	border-radius: 4px;
+	flex-shrink: 0;
+}
+
+.legend-text {
+	font-size: var(--font-size-sm);
+	color: var(--color-text-dark);
+	line-height: 1.3;
+}
+
+/* Status indicators */
+.legend-item.status-completed .legend-indicator {
+	background-color: var(--color-light-green);
+	border: 2px solid var(--color-success);
+}
+
+.legend-item.status-current .legend-indicator {
+	background-color: rgba(245, 158, 11, 0.3);
+	border: 2px solid var(--color-warning);
+}
+
+.legend-item.status-overdue .legend-indicator {
+	background-color: rgba(239, 68, 68, 0.2);
+	border: 2px solid var(--color-danger);
+}
+
+.legend-item.status-upcoming .legend-indicator {
+	background-color: rgba(59, 130, 246, 0.1);
+	border: 2px solid var(--color-primary);
+}
+
+/* Alternate indicator style */
+.legend-indicator.circle {
+	border-radius: 50%;
+}
+
+.legend-indicator.square {
+	border-radius: 4px;
+}
+
+@media (max-width: 1024px) {
+	.legend {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--spacing-md);
+		position: static;
+		padding: var(--spacing-md);
+	}
+
+	.legend-title {
+		grid-column: 1 / -1;
+		margin-bottom: 0;
+	}
+
+	.legend-items {
+		grid-column: 1 / -1;
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--spacing-md);
+	}
+}
+
+@media (max-width: 768px) {
+	.legend {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.legend-items {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--spacing-sm);
+	}
+
+	.legend-text {
+		font-size: 11px;
+	}
+
+	.legend-indicator {
+		width: 20px;
+		height: 20px;
+	}
+}
+
+@media (max-width: 480px) {
+	.legend-items {
+		grid-template-columns: 1fr;
+	}
+}
