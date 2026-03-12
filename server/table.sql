@@ -16,7 +16,6 @@ CREATE TABLE maintenance_types (A
     name VARCHAR(200) NOT NULL,
     interval_km INT,
     interval_hours INT,
-    parent_id INT REFERENCES maintenance_types(id) ON DELETE SET NULL,
     is_cascading BOOLEAN DEFAULT FALSE,
     is_one_time BOOLEAN DEFAULT FALSE,
     is_seasonal BOOLEAN DEFAULT FALSE,

@@ -8,43 +8,43 @@ SELECT * from maintenance_actions;
 
 SELECT * from vehicles;
 
--- TRUNCATE TABLE 
---     service_record_items,
---     service_records,
---     maintenance_actions,
---     maintenance_types,
---     vehicles
--- RESTART IDENTITY CASCADE;
+TRUNCATE TABLE 
+    service_record_items,
+    service_records,
+    maintenance_actions,
+    maintenance_types,
+    vehicles
+RESTART IDENTITY CASCADE;
 
-INSERT INTO maintenance_types (code, name, interval_km, interval_hours, parent_id, is_cascading, is_one_time, is_seasonal)
+INSERT INTO maintenance_types (code, name, interval_km, interval_hours, is_cascading, is_one_time, is_seasonal)
 VALUES
-    ('AFTER_RUN', 'Послеобкаточное ТО', 1000, 100, NULL, FALSE, TRUE, FALSE),
-    ('TO1', 'ТО-1', 5000, 250, NULL, FALSE, FALSE, FALSE),
-    ('TO2', 'ТО-2', 10000, 500, NULL, TRUE, FALSE, FALSE),
-    ('TO3', 'ТО-3', 20000, 1000, NULL, TRUE, FALSE, FALSE);
+    ('AFTER_RUN', 'Послеобкаточное ТО', 1000, 100, FALSE, TRUE, FALSE),
+    ('TO1', 'ТО-1', 5000, 250, FALSE, FALSE, FALSE),
+    ('TO2', 'ТО-2', 10000, 500, TRUE, FALSE, FALSE),
+    ('TO3', 'ТО-3', 20000, 1000, TRUE, FALSE, FALSE);
 
 -- ============================================
 -- 2. Типы ТО - ДРУГИЕ ВИДЫ (ДТО)
 -- ============================================
-INSERT INTO maintenance_types (code, name, interval_km, interval_hours, parent_id, is_cascading, is_one_time, is_seasonal)
+INSERT INTO maintenance_types (code, name, interval_km, interval_hours, is_cascading, is_one_time, is_seasonal)
 VALUES
-    ('DTO_50H', 'ДТО - 50ч', NULL, 50, NULL, FALSE, FALSE, FALSE),
-    ('DTO_2000H', 'ДТО - 2000ч', NULL, 2000, NULL, FALSE, FALSE, FALSE),
-    ('DTO_2500H', 'ДТО - 2500ч', NULL, 2500, NULL, FALSE, FALSE, FALSE),
-    ('DTO_20000H', 'ДТО - 20000ч', NULL, 20000, NULL, FALSE, FALSE, FALSE),
-    ('DTO_60000KM', 'ДТО - 60000км', 60000, NULL, NULL, FALSE, FALSE, FALSE),
-    ('DTO_100000KM', 'ДТО - 100000км', 100000, NULL, NULL, FALSE, FALSE, FALSE),
-    ('DTO_175000KM', 'ДТО - 175000км', 175000, NULL, NULL, FALSE, FALSE, FALSE),
-    ('DTO_200000KM', 'ДТО - 200000км', 200000, NULL, NULL, FALSE, FALSE, FALSE),
-    ('DTO_350000KM', 'ДТО - 350000км', 350000, NULL, NULL, FALSE, FALSE, FALSE),
-    ('DTO_500000KM', 'ДТО - 500000км', 500000, NULL, NULL, FALSE, FALSE, FALSE);
+    ('DTO_50H', 'ДТО - 50ч', NULL, 50,  FALSE, FALSE, FALSE),
+    ('DTO_2000H', 'ДТО - 2000ч', NULL, 2000, FALSE, FALSE, FALSE),
+    ('DTO_2500H', 'ДТО - 2500ч', NULL, 2500,  FALSE, FALSE, FALSE),
+    ('DTO_20000H', 'ДТО - 20000ч', NULL, 20000, FALSE, FALSE, FALSE),
+    ('DTO_60000KM', 'ДТО - 60000км', 60000, NULL, FALSE, FALSE, FALSE),
+    ('DTO_100000KM', 'ДТО - 100000км', 100000, NULL, FALSE, FALSE, FALSE),
+    ('DTO_175000KM', 'ДТО - 175000км', 175000, NULL, FALSE, FALSE, FALSE),
+    ('DTO_200000KM', 'ДТО - 200000км', 200000, NULL, FALSE, FALSE, FALSE),
+    ('DTO_350000KM', 'ДТО - 350000км', 350000, NULL, FALSE, FALSE, FALSE),
+    ('DTO_500000KM', 'ДТО - 500000км', 500000, NULL, FALSE, FALSE, FALSE);
 
 -- ============================================
 -- 3. Сезонное ТО
 -- ============================================
-INSERT INTO maintenance_types (code, name, interval_km, interval_hours, parent_id, is_cascading, is_one_time, is_seasonal)
+INSERT INTO maintenance_types (code, name, interval_km, interval_hours, is_cascading, is_one_time, is_seasonal)
 VALUES
-    ('SEASONAL', 'Сезонное ТО', NULL, NULL, NULL, FALSE, FALSE, TRUE);
+    ('SEASONAL', 'Сезонное ТО', NULL, NULL, FALSE, FALSE, TRUE);
 
 -- ============================================
 -- 4. ДЕЙСТВИЯ ДЛЯ ТО1
