@@ -3,6 +3,7 @@ package service
 // ТО3 = ТО1+ТО2+ТО3, ТО2 = ТО1+ТО2
 
 import (
+	"belaz-calendar-server/internal/constant"
 	"belaz-calendar-server/internal/models"
 	"belaz-calendar-server/internal/pkg/logger"
 	"belaz-calendar-server/internal/repository"
@@ -144,6 +145,47 @@ func (s *maintenanceService) Complete(
 		return fmt.Errorf("engine hours cannot decrease: %f < %f", engineHours, vehicle.TotalEngineHours)
 	}
 
+	currentType, err := s.typeRepo.GetByID(ctx, record.TypeID)
+	if err != nil {
+		return fmt.Errorf("failed to get maintenance type: %w", err)
+	}
+
+	if !currentType.IsSeasonal && !currentType.IsOneTime && !isCyclicType(currentType.Code) {
+		if currentType.IntervalKM != nil && *currentType.IntervalKM > 0 {
+			intervalKM := float64(*currentType.IntervalKM)
+			expectedMileage := 0.0
+			if vehicle.TotalMileage > 0 {
+				nextThreshold := float64(int(vehicle.TotalMileage/intervalKM)+1) * intervalKM
+				expectedMileage = nextThreshold
+			}
+
+			if expectedMileage > 0 && !s.calculator.IsWithinTolerance(mileage, expectedMileage, constant.MileageTolerance) {
+				s.logger.Warn("Mileage outside tolerance for DTO completion",
+					zap.Float64("actual", mileage),
+					zap.Float64("expected", expectedMileage),
+					zap.Float64("tolerance", constant.MileageTolerance),
+					zap.String("type", currentType.Code))
+			}
+		}
+
+		if currentType.IntervalHours != nil && *currentType.IntervalHours > 0 {
+			intervalHours := float64(*currentType.IntervalHours)
+			expectedHours := 0.0
+			if vehicle.TotalEngineHours > 0 {
+				nextThreshold := float64(int(vehicle.TotalEngineHours/intervalHours)+1) * intervalHours
+				expectedHours = nextThreshold
+			}
+
+			if expectedHours > 0 && !s.calculator.IsWithinTolerance(engineHours, expectedHours, constant.EngineHoursTolerance) {
+				s.logger.Warn("Engine hours outside tolerance for DTO completion",
+					zap.Float64("actual", engineHours),
+					zap.Float64("expected", expectedHours),
+					zap.Float64("tolerance", constant.EngineHoursTolerance),
+					zap.String("type", currentType.Code))
+			}
+		}
+	}
+
 	now := time.Now()
 	record.Status = "DONE"
 	record.CompletionDate = &req.CompletionDate
@@ -165,17 +207,13 @@ func (s *maintenanceService) Complete(
 		return fmt.Errorf("failed to update vehicle metrics: %w", err)
 	}
 
-	currentType, err := s.typeRepo.GetByID(ctx, record.TypeID)
-	if err != nil {
-		s.logger.Error("Failed to get current maintenance type",
-			zap.Error(err),
-			zap.Int64("type_id", record.TypeID))
-		return fmt.Errorf("failed to get maintenance type: %w", err)
-	}
+	if isCyclicType(currentType.Code) {
 
-	if !currentType.IsSeasonal && !currentType.IsOneTime {
-
-		nextTypeCode := determineNextCyclicType(currentType.Code)
+		nextTypeCode, err := s.determineNextCyclicType(ctx, vehicle.ID, currentType.Code)
+		if err != nil {
+			s.logger.Error("Failed to determine next cyclic type", zap.Error(err))
+			nextTypeCode = "TO1"
+		}
 
 		nextType, err := s.typeRepo.GetByCode(ctx, nextTypeCode)
 		if err != nil {
@@ -186,45 +224,49 @@ func (s *maintenanceService) Complete(
 			return fmt.Errorf("next type '%s' not found: %w", nextTypeCode, err)
 		}
 
-		s.logger.Debug("Calculating next maintenance",
-			zap.String("current_type", currentType.Code),
-			zap.String("next_type", nextTypeCode),
-			zap.Int64("vehicle_id", vehicle.ID),
-			zap.Float64("current_mileage", vehicle.TotalMileage),
-			zap.Float64("current_hours", vehicle.TotalEngineHours),
-			zap.Float64("avg_speed", vehicle.AvgSpeed),
-			zap.Int("next_interval_km", func() int {
-				if nextType.IntervalKM != nil {
-					return *nextType.IntervalKM
-				}
-				return 0
-			}()),
-			zap.Int("next_interval_hours", func() int {
-				if nextType.IntervalHours != nil {
-					return *nextType.IntervalHours
-				}
-				return 0
-			}()))
 
-		result := s.calculator.CalculateNextDue(vehicle, nextType, record)
+		cyclicResult := s.calculator.CalculateNextCyclicDue(vehicle, nextType, record)
 
-		if result == nil {
-			s.logger.Warn("Calculator returned nil - no next maintenance scheduled",
+		s.logger.Info("Calculated next cyclic maintenance",
+			zap.String("next_type", nextType.Code),
+			zap.Time("due_date", cyclicResult.DueDate),
+			zap.Int("days_until", cyclicResult.DaysUntilDue))
+
+		nextRecord := &models.ServiceRecord{
+			VehicleID:      vehicle.ID,
+			TypeID:         nextType.ID,
+			Status:         "PLANNED",
+			CalculatedDate: cyclicResult.DueDate,
+			ScheduledDate:  cyclicResult.DueDate,
+			IsRescheduled:  false,
+		}
+
+		if err := s.recordRepo.Create(ctx, nextRecord); err != nil {
+			s.logger.Error("Failed to CREATE next maintenance record",
+				zap.Error(err),
 				zap.Int64("vehicle_id", vehicle.ID),
-				zap.String("current_type", currentType.Code),
-				zap.String("next_type", nextType.Code))
-		} else {
-			s.logger.Info("Calculator result",
 				zap.String("next_type", nextType.Code),
-				zap.Time("due_date", result.DueDate),
-				zap.Float64("mileage_threshold", result.NextMileage),
-				zap.Float64("hours_threshold", result.NextHours),
-				zap.String("triggered_by", result.TriggeredBy),
-				zap.Int("days_until_due", result.DaysUntilDue))
+				zap.Any("record", nextRecord))
+		} else {
+			s.logger.Info("Next maintenance record CREATED",
+				zap.Int64("record_id", nextRecord.ID),
+				zap.Int64("vehicle_id", vehicle.ID),
+				zap.String("type", nextType.Code),
+				zap.Time("scheduled_date", cyclicResult.DueDate))
+		}
 
+	} else if !currentType.IsSeasonal && !currentType.IsOneTime {
+
+
+		s.logger.Info("Processing recurring non-cyclic maintenance",
+			zap.String("type", currentType.Code))
+
+		result := s.calculator.CalculateNextDue(vehicle, currentType, record)
+
+		if result != nil {
 			nextRecord := &models.ServiceRecord{
 				VehicleID:      vehicle.ID,
-				TypeID:         nextType.ID,
+				TypeID:         currentType.ID, 
 				Status:         "PLANNED",
 				CalculatedDate: result.DueDate,
 				ScheduledDate:  result.DueDate,
@@ -232,19 +274,15 @@ func (s *maintenanceService) Complete(
 			}
 
 			if err := s.recordRepo.Create(ctx, nextRecord); err != nil {
-				s.logger.Error("Failed to CREATE next maintenance record",
+				s.logger.Error("Failed to CREATE next recurring record",
 					zap.Error(err),
 					zap.Int64("vehicle_id", vehicle.ID),
-					zap.String("next_type", nextType.Code),
-					zap.Any("record", nextRecord))
+					zap.String("type", currentType.Code))
 			} else {
-				s.logger.Info("Next maintenance record CREATED",
+				s.logger.Info("Next recurring maintenance record CREATED",
 					zap.Int64("record_id", nextRecord.ID),
-					zap.Int64("vehicle_id", vehicle.ID),
-					zap.String("type", nextType.Code),
-					zap.Time("scheduled_date", result.DueDate),
-					zap.Float64("threshold_mileage", result.NextMileage),
-					zap.Float64("threshold_hours", result.NextHours))
+					zap.String("type", currentType.Code),
+					zap.Time("scheduled_date", result.DueDate))
 			}
 		}
 	}
@@ -461,7 +499,6 @@ func (s *maintenanceService) GetMaintenanceDetails(
 func (s *maintenanceService) InitializeMaintenanceSchedules(ctx context.Context) error {
 	s.logger.Info("Starting maintenance schedule initialization...")
 
-	// 1. Получаем все автомобили
 	vehicles, err := s.vehicleRepo.GetAll(ctx)
 	if err != nil {
 		s.logger.Error("Failed to get vehicles for initialization", zap.Error(err))
@@ -470,7 +507,6 @@ func (s *maintenanceService) InitializeMaintenanceSchedules(ctx context.Context)
 
 	s.logger.Info("Found vehicles to check", zap.Int("count", len(vehicles)))
 
-	// 2. Получаем все типы ТО
 	allTypes, err := s.typeRepo.GetAll(ctx)
 	if err != nil {
 		s.logger.Error("Failed to get maintenance types", zap.Error(err))
@@ -479,7 +515,6 @@ func (s *maintenanceService) InitializeMaintenanceSchedules(ctx context.Context)
 
 	createdCount := 0
 
-	// 3. Для каждого автомобиля
 	for _, vehicle := range vehicles {
 		s.logger.Debug("Checking vehicle", zap.Int64("id", vehicle.ID), zap.String("vin", vehicle.VIN))
 
@@ -490,7 +525,10 @@ func (s *maintenanceService) InitializeMaintenanceSchedules(ctx context.Context)
 				zap.Error(err))
 		}
 
-		nextCyclicCode := determineNextCyclicType(lastCyclicCode)
+		nextCyclicCode, err := s.determineNextCyclicType(ctx, vehicle.ID, lastCyclicCode)
+		if err != nil {
+			nextCyclicCode = "TO1"
+		}
 
 		nextCyclicType, err := s.typeRepo.GetByCode(ctx, nextCyclicCode)
 		if err != nil {
@@ -504,29 +542,30 @@ func (s *maintenanceService) InitializeMaintenanceSchedules(ctx context.Context)
 					zap.Int64("vehicle_id", vehicle.ID),
 					zap.String("type_code", nextCyclicCode))
 			} else if !hasPlanned {
-				result := s.calculator.CalculateNextDue(vehicle, nextCyclicType, nil)
-				if result != nil {
-					record := &models.ServiceRecord{
-						VehicleID:      vehicle.ID,
-						TypeID:         nextCyclicType.ID,
-						Status:         "PLANNED",
-						CalculatedDate: result.DueDate,
-						ScheduledDate:  result.DueDate,
-						IsRescheduled:  false,
-					}
-					if err := s.recordRepo.Create(ctx, record); err != nil {
-						s.logger.Error("Failed to create cyclic maintenance record",
-							zap.Error(err),
-							zap.Int64("vehicle_id", vehicle.ID),
-							zap.String("type_code", nextCyclicCode))
-					} else {
-						createdCount++
-						s.logger.Info("Cyclic maintenance record created",
-							zap.Int64("record_id", record.ID),
-							zap.Int64("vehicle_id", vehicle.ID),
-							zap.String("type_code", nextCyclicCode),
-							zap.Time("scheduled_date", result.DueDate))
-					}
+				lastRec, _ := s.recordRepo.GetLastCompletedCyclicRecord(ctx, vehicle.ID)
+
+				cyclicResult := s.calculator.CalculateNextCyclicDue(vehicle, nextCyclicType, lastRec)
+
+				record := &models.ServiceRecord{
+					VehicleID:      vehicle.ID,
+					TypeID:         nextCyclicType.ID,
+					Status:         "PLANNED",
+					CalculatedDate: cyclicResult.DueDate,
+					ScheduledDate:  cyclicResult.DueDate,
+					IsRescheduled:  false,
+				}
+				if err := s.recordRepo.Create(ctx, record); err != nil {
+					s.logger.Error("Failed to create cyclic maintenance record",
+						zap.Error(err),
+						zap.Int64("vehicle_id", vehicle.ID),
+						zap.String("type_code", nextCyclicCode))
+				} else {
+					createdCount++
+					s.logger.Info("Cyclic maintenance record created",
+						zap.Int64("record_id", record.ID),
+						zap.Int64("vehicle_id", vehicle.ID),
+						zap.String("type_code", nextCyclicCode),
+						zap.Time("scheduled_date", cyclicResult.DueDate))
 				}
 			}
 		}
@@ -579,17 +618,56 @@ func (s *maintenanceService) InitializeMaintenanceSchedules(ctx context.Context)
 	return nil
 }
 
-func determineNextCyclicType(lastTypeCode string) string {
-	switch lastTypeCode {
-	case "TO1":
-		return "TO2"
-	case "TO2":
-		return "TO3"
-	case "TO3":
-		return "TO1"
-	default:
-		return "TO1"
+func (s *maintenanceService) determineNextCyclicType(
+	ctx context.Context,
+	vehicleID int64,
+	currentTypeCode string,
+) (string, error) {
+	if currentTypeCode == "TO2" || currentTypeCode == "TO3" {
+		return "TO1", nil
 	}
+
+	if currentTypeCode == "TO1" {
+
+		prevRecord, err := s.recordRepo.GetLastCompletedCyclicRecord(ctx, vehicleID)
+		if err != nil {
+			s.logger.Warn("Failed to get last cyclic record", zap.Error(err))
+		}
+		if prevRecord == nil {
+			return "TO2", nil
+		}
+
+		lastTO2, err2 := s.recordRepo.GetLastCompleted(ctx, vehicleID, s.getTypeID(ctx, "TO2"))
+		lastTO3, err3 := s.recordRepo.GetLastCompleted(ctx, vehicleID, s.getTypeID(ctx, "TO3"))
+
+		var dateTO2, dateTO3 time.Time
+		if err2 == nil && lastTO2 != nil && lastTO2.CompletionDate != nil {
+			dateTO2 = *lastTO2.CompletionDate
+		}
+		if err3 == nil && lastTO3 != nil && lastTO3.CompletionDate != nil {
+			dateTO3 = *lastTO3.CompletionDate
+		}
+
+		if dateTO2.IsZero() && dateTO3.IsZero() {
+			return "TO2", nil
+		}
+
+		if dateTO2.After(dateTO3) {
+			return "TO3", nil
+		} else {
+			return "TO2", nil
+		}
+	}
+
+	return "TO1", nil
+}
+
+func (s *maintenanceService) getTypeID(ctx context.Context, code string) int64 {
+	t, err := s.typeRepo.GetByCode(ctx, code)
+	if err != nil {
+		return 0
+	}
+	return t.ID
 }
 
 func isCyclicType(code string) bool {

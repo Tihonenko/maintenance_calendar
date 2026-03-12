@@ -20,6 +20,7 @@ type ServiceRecordRepository interface {
 	Update(ctx context.Context, record *models.ServiceRecord) error
 
 	GetLastCompleted(ctx context.Context, vehicleID, typeID int64) (*models.ServiceRecord, error)
+	GetLastCompletedCyclicRecord(ctx context.Context, vehicleID int64) (*models.ServiceRecord, error)
 	GetNextPlanned(ctx context.Context, vehicleID, typeID int64) (*models.ServiceRecord, error)
 	GetActiveSeasonal(ctx context.Context, vehicleID int64) (*models.ServiceRecord, error)
 	HasActiveRecord(ctx context.Context, vehicleID, typeID int64) (bool, error)
@@ -166,6 +167,35 @@ func (r *serviceRecordRepository) GetLastCompleted(
 
 	record := &models.ServiceRecord{}
 	err := r.db.GetContext(ctx, record, query, vehicleID, typeID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return record, nil
+}
+
+func (r *serviceRecordRepository) GetLastCompletedCyclicRecord(
+	ctx context.Context,
+	vehicleID int64,
+) (*models.ServiceRecord, error) {
+	query := `
+		SELECT sr.id, sr.vehicle_id, sr.type_id, sr.status, sr.calculated_date, sr.scheduled_date, 
+		       sr.completion_date, sr.mileage_at_completion, sr.hours_at_completion, 
+		       sr.is_rescheduled, sr.created_at, sr.updated_at 
+		FROM service_records sr
+		JOIN maintenance_types mt ON sr.type_id = mt.id
+		WHERE sr.vehicle_id = $1 
+		  AND mt.code IN ('TO1', 'TO2', 'TO3')
+		  AND sr.status = 'DONE' 
+		  AND sr.completion_date IS NOT NULL
+		ORDER BY sr.completion_date DESC 
+		LIMIT 1`
+
+	record := &models.ServiceRecord{}
+	err := r.db.GetContext(ctx, record, query, vehicleID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
