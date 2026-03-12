@@ -8,7 +8,6 @@ type MaintenanceType struct {
 	Name          string    `db:"name" json:"name"`
 	IntervalKM    *int      `db:"interval_km" json:"interval_km"`
 	IntervalHours *int      `db:"interval_hours" json:"interval_hours"`
-	ParentID      *int64    `db:"parent_id" json:"parent_id"`
 	IsCascading   bool      `db:"is_cascading" json:"is_cascading"`
 	IsOneTime     bool      `db:"is_one_time" json:"is_one_time"`
 	IsSeasonal    bool      `db:"is_seasonal" json:"is_seasonal"`
@@ -56,11 +55,10 @@ type ServiceRecordItem struct {
 	ActionID        int64     `db:"action_id" json:"action_id"`
 	IsPassed        bool      `db:"is_passed" json:"is_passed"`
 	Comment         string    `db:"comment" json:"comment,omitempty"`
-	CreatedAt       time.Time `db:"created_at" json:"created_at"
-	`
-	SystemNode  string `db:"system_node" json:"system_node"`
-	Description string `db:"description" json:"description"`
-	SortOrder   int    `db:"sort_order" json:"sort_order"`
+	CreatedAt       time.Time `db:"created_at" json:"created_at"`
+	SystemNode      string    `db:"system_node" json:"system_node"`
+	Description     string    `db:"description" json:"description"`
+	SortOrder       int       `db:"sort_order" json:"sort_order"`
 }
 
 type MaintenanceAction struct {
