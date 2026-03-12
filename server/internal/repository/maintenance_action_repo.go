@@ -7,6 +7,10 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type MaintenanceActionRepository interface {
+	GetByTypeIDs(ctx context.Context, typeIDs []int64) ([]*models.MaintenanceAction, error)
+}
+
 type maintenanceActionRepository struct {
 	db *sqlx.DB
 }

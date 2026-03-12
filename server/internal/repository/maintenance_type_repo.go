@@ -11,6 +11,13 @@ import (
 
 var ErrMaintenanceTypeNotFound = errors.New("maintenance type not found")
 
+type MaintenanceTypeRepository interface {
+	GetAll(ctx context.Context) ([]*models.MaintenanceType, error)
+	GetByID(ctx context.Context, id int64) (*models.MaintenanceType, error)
+	GetByCode(ctx context.Context, code string) (*models.MaintenanceType, error)
+	GetLastCompletedCyclicType(ctx context.Context, vehicleID int64) (string, error)
+}
+
 type maintenanceTypeRepository struct {
 	db *sqlx.DB
 }

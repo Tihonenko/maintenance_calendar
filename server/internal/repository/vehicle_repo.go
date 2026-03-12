@@ -14,6 +14,12 @@ var (
 	ErrVehicleExists   = errors.New("vehicle with this VIN alredy exists")
 )
 
+type VehicleRepository interface {
+	GetByID(ctx context.Context, id int64) (*models.Vehicle, error)
+	GetAll(ctx context.Context) ([]*models.Vehicle, error)
+	UpdateCurrentMetrics(ctx context.Context, id int64, mileage, hours float64) error
+}
+
 type vehicleRepository struct {
 	db *sqlx.DB
 }
@@ -30,8 +36,8 @@ func (r *vehicleRepository) Create(ctx context.Context, vehicle *models.Vehicle)
 	row, err := r.db.NamedQueryContext(ctx, query, vehicle)
 
 	if err != nil {
-		if isUniqueViolation(err) {
-			return ErrVehicleExists
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrVehicleNotFound
 		}
 		return err
 	}
@@ -102,8 +108,4 @@ func (r *vehicleRepository) UpdateCurrentMetrics(ctx context.Context, id int64, 
 	}
 
 	return nil
-}
-
-func isUniqueViolation(err error) bool {
-	return err != nil
 }
