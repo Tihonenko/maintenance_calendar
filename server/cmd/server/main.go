@@ -35,7 +35,7 @@ func main() {
 
 	logger.Log.Info("Database connected successfully")
 
-	srv := server.NewServer(db)
+	srv := server.NewServer(db, logger.Log)
 
 	go func() {
 		logger.Log.Info("Starting server", zap.String("port", port))

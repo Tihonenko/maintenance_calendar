@@ -20,10 +20,10 @@ type Server struct {
 	httpSrv      *http.Server
 	db           *sqlx.DB
 	maintService service.MaintenanceService
+	logger       *zap.Logger
 }
 
-func NewServer(db *sqlx.DB) *Server {
-	logger.Init()
+func NewServer(db *sqlx.DB, logger *zap.Logger) *Server {
 
 	vehicleRepo := repository.NewVehicleRepository(db)
 	maintenanceTypeRepo := repository.NewMaintenanceTypeRepository(db)
@@ -78,7 +78,7 @@ func NewServer(db *sqlx.DB) *Server {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	logger.Log.Info("Server initialized successfully",
+	logger.Info("Server initialized successfully",
 		zap.String("version", "1.0.0"),
 		zap.Int("repositories", 5),
 		zap.Int("services", 2),
