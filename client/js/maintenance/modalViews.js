@@ -229,7 +229,8 @@ class ModalViews {
 					: "planned";
 
 				eventEl.className = `calendar-event event-${status}`;
-				eventEl.textContent = `${event.type_code || ""} - ${event.type_name}`;
+				const vinDisplay = event.vin ? ` (VIN: ${event.vin})` : "";
+				eventEl.textContent = `${event.type_code || ""} - ${event.type_name}${vinDisplay}`;
 				eventEl.title = event.type_name;
 				eventEl.dataset.eventId = event.id;
 				eventEl.dataset.recordId = event.id;

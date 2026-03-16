@@ -8,6 +8,7 @@ class CalendarManager {
 		this.events = [];
 		this.vehicles = [];
 		this.selectedVehicleId = null;
+		this.sortType = "none";
 	}
 
 	setMonth(month, year) {
@@ -51,16 +52,60 @@ class CalendarManager {
 		this.vehicles = vehicles || [];
 	}
 
+	setSortType(sortType) {
+		this.sortType = sortType;
+	}
+
 	getEventsForDate(date) {
 		if (typeof date === "string") {
 			date = new Date(date);
 		}
 
 		const dateString = DateUtils.format(date);
-		return this.events.filter((event) => {
+		const events = this.events.filter((event) => {
 			const eventDate = event.scheduled_date || event.calculated_date;
 			return DateUtils.format(eventDate) === dateString;
 		});
+		return this.sortEvents(events);
+	}
+
+	sortEvents(events) {
+		const statusOrder = {
+			"red": 1,
+			"orange": 2,
+			"green": 3,
+			"light-green": 4
+		};
+
+		switch (this.sortType) {
+			case "status":
+				return [...events].sort((a, b) => {
+					const orderA = statusOrder[a.ui_status] || 5;
+					const orderB = statusOrder[b.ui_status] || 5;
+					return orderA - orderB;
+				});
+
+			case "mileage":
+				return [...events].sort((a, b) => {
+					const vehicleA = this.vehicles.find(v => v.id === a.vehicle_id);
+					const vehicleB = this.vehicles.find(v => v.id === b.vehicle_id);
+					const mileageA = vehicleA?.total_mileage || 0;
+					const mileageB = vehicleB?.total_mileage || 0;
+					return mileageB - mileageA;
+				});
+
+			case "hours":
+				return [...events].sort((a, b) => {
+					const vehicleA = this.vehicles.find(v => v.id === a.vehicle_id);
+					const vehicleB = this.vehicles.find(v => v.id === b.vehicle_id);
+					const hoursA = vehicleA?.total_engine_hours || 0;
+					const hoursB = vehicleB?.total_engine_hours || 0;
+					return hoursB - hoursA;
+				});
+
+			default:
+				return events;
+		}
 	}
 
 	getEventStatus(event) {
