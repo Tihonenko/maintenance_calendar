@@ -71,6 +71,7 @@ class App {
 				year,
 			);
 			this.calendar.setEvents(response.events || []);
+			this.calendar.setVehicles(this.vehicles);
 			this.calendar.render();
 
 			const dayEventsModal = document.getElementById("dayEventsModal");
@@ -248,7 +249,10 @@ class App {
 
 			const event = this.findEventById(recordId);
 			if (event) {
-				ModalViews.showActionsModal(event, actions, isCompleted);
+				const vehicle = this.vehicles.find(
+					(v) => v.id === event.vehicle_id,
+				);
+				ModalViews.showActionsModal(event, actions, isCompleted, vehicle);
 			}
 		} catch (error) {
 			console.error("Failed to load actions:", error);

@@ -163,7 +163,18 @@ class DateUtils {
 		if (typeof dateString !== "string") {
 			return dateString;
 		}
-		return new Date(dateString + "T00:00:00");
+		
+		if (dateString.includes('T')) {
+			return this.parseISODate(dateString);
+		}
+		
+		const [year, month, day] = dateString.split('-').map(Number);
+		return new Date(year, month - 1, day);
+	}
+
+	static parseISODate(isoString) {
+		const date = new Date(isoString);
+		return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
 	}
 
 	static getCurrentMonth() {
@@ -178,14 +189,18 @@ class DateUtils {
 		let date;
 
 		if (typeof dateInput === "string") {
-			date = new Date(dateInput + "T00:00:00");
+			const [year, month, day] = dateInput.split('-').map(Number);
+			date = new Date(year, month - 1, day);
 		} else if (dateInput instanceof Date) {
 			date = dateInput;
 		} else {
 			return null;
 		}
 
-		return date.toISOString();
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, '0');
+		const day = String(date.getDate()).padStart(2, '0');
+		return `${year}-${month}-${day}T00:00:00Z`;
 	}
 }
 

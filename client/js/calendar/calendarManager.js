@@ -2,9 +2,11 @@ import DateUtils from "../utils/dateUtils.js";
 
 class CalendarManager {
 	constructor() {
-		this.currentMonth = DateUtils.getCurrentMonth().month;
-		this.currentYear = DateUtils.getCurrentMonth().year;
+		const today = DateUtils.getCurrentMonth();
+		this.currentMonth = today.month;
+		this.currentYear = today.year;
 		this.events = [];
+		this.vehicles = [];
 		this.selectedVehicleId = null;
 	}
 
@@ -43,6 +45,10 @@ class CalendarManager {
 
 	setEvents(events) {
 		this.events = events || [];
+	}
+
+	setVehicles(vehicles) {
+		this.vehicles = vehicles || [];
 	}
 
 	getEventsForDate(date) {
@@ -119,7 +125,11 @@ class CalendarManager {
 				const eventEl = document.createElement("div");
 				eventEl.className = `calendar-event event-${this.getEventStatus(event)}`;
 				eventEl.textContent = event.type_code || event.type_name;
-				eventEl.title = event.type_name;
+				
+				const vehicle = this.vehicles.find(v => v.id === event.vehicle_id);
+				const vinInfo = vehicle && vehicle.vin ? ` (VIN: ${vehicle.vin})` : "";
+				eventEl.title = `${event.type_name}${vinInfo}`;
+				
 				eventEl.dataset.eventId = event.id;
 				eventEl.dataset.recordId = event.id;
 				eventEl.style.cursor = "pointer";

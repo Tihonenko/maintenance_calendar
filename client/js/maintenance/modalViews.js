@@ -2,14 +2,15 @@ import ModalManager from "../ui/modalManager.js";
 import DateUtils from "../utils/dateUtils.js";
 
 class ModalViews {
-	static showActionsModal(event, actions, isCompleted = false) {
+	static showActionsModal(event, actions, isCompleted = false, vehicle = null) {
 		const titleEl = document.getElementById("actionsModalTitle");
 		const listEl = document.getElementById("actionsList");
 
 		const typeDisplay = `${event.type_code || ""} - ${event.type_name || "Unknown"}`;
+		const vinDisplay = vehicle && vehicle.vin ? ` (VIN: ${vehicle.vin})` : "";
 		titleEl.textContent = isCompleted
-			? `Выполненные действия: ${typeDisplay}`
-			: `Действия для: ${typeDisplay}`;
+			? `Выполненные действия: ${typeDisplay}${vinDisplay}`
+			: `Действия для: ${typeDisplay}${vinDisplay}`;
 
 		listEl.innerHTML = "";
 
@@ -68,13 +69,17 @@ class ModalViews {
 		const calculated = DateUtils.parse(event.calculated_date);
 		const minDate = DateUtils.addDays(calculated, -2);
 		const maxDate = DateUtils.addDays(calculated, 2);
-		const scheduled = event.scheduled_date
-			? DateUtils.parse(event.scheduled_date)
-			: calculated;
+		
+		let defaultDate = calculated;
+		if (event.scheduled_date && !event.scheduled_date.startsWith('0001-01-01')) {
+			defaultDate = DateUtils.parse(event.scheduled_date);
+		}
 
 		dateInput.min = DateUtils.format(minDate);
 		dateInput.max = DateUtils.format(maxDate);
-		dateInput.value = DateUtils.format(scheduled);
+		dateInput.value = DateUtils.format(defaultDate);
+		
+		dateRangeEl.textContent = `Доступный диапазон: с ${DateUtils.formatDisplay(minDate)} по ${DateUtils.formatDisplay(maxDate)}`;
 
 		const newSaveBtn = saveBtn.cloneNode(true);
 		saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
@@ -146,6 +151,13 @@ class ModalViews {
 
 			if (!date || isNaN(mileage) || isNaN(hours)) {
 				alert("Пожалуйста, заполните все поля");
+				return;
+			}
+
+			const selectedDate = new Date(date + "T00:00:00");
+			const today = DateUtils.today();
+			if (selectedDate > today) {
+				alert("Нельзя отметить ТО выполненным с датой в будущем");
 				return;
 			}
 

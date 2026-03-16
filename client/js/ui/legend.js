@@ -23,7 +23,7 @@ class LegendManager {
 		{
 			id: "planned",
 			name: "Предстоящее ТО",
-			description: "Запланировано на будущее (green)",
+			description: "Запланировано на будущее (blue)",
 			class: "status-upcoming",
 		},
 	];
