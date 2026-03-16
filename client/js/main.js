@@ -270,14 +270,6 @@ class App {
 
 		});
 
-		document.getElementById("sortSelect").addEventListener("change", (e) => {
-
-			this.calendar.setSortType(e.target.value);
-
-			this.calendar.render();
-
-		});
-
 
 
 		document.addEventListener("click", (e) => {
