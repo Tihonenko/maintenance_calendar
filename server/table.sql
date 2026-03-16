@@ -10,7 +10,7 @@ CREATE TABLE vehicles (
 );
 
 
-CREATE TABLE maintenance_types (A
+CREATE TABLE maintenance_types (
     id SERIAL PRIMARY KEY,
     code VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(200) NOT NULL,
