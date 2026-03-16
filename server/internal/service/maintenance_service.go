@@ -301,29 +301,19 @@ func (s *maintenanceService) Reschedule(
 	recordID int64,
 	req *models.RescheduleRequest,
 ) error {
-
 	record, err := s.recordRepo.GetByID(ctx, recordID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get record %d: %w", recordID, err)
 	}
 
-	if req.NewScheduledDate.Before(time.Now().Truncate(24 * time.Hour)) {
-		return ErrPastDate
-	}
+	calculatedDate := record.CalculatedDate.Truncate(24 * time.Hour)
+	newScheduledDate := req.NewScheduledDate.Truncate(24 * time.Hour)
 
-	mType, err := s.typeRepo.GetByID(ctx, record.TypeID)
-	if err != nil {
-		return err
-	}
-
-	if !mType.IsSeasonal {
-		calc := record.CalculatedDate.Truncate(24 * time.Hour)
-		newD := req.NewScheduledDate.Truncate(24 * time.Hour)
-		diff := newD.Sub(calc).Hours() / 24
-
-		if diff < -2 || diff > 2 {
-			return fmt.Errorf("%w: diff=%.1f days", ErrWindowExceeded, diff)
-		}
+	daysDiff := int(newScheduledDate.Sub(calculatedDate).Hours() / 24)
+	if daysDiff < -3 || daysDiff > 3 {
+		return fmt.Errorf("reschedule allowed only ±3 days from calculated date (calculated: %s, requested: %s)",
+			calculatedDate.Format("2006-01-02"),
+			newScheduledDate.Format("2006-01-02"))
 	}
 
 	record.ScheduledDate = req.NewScheduledDate
